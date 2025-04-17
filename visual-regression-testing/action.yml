@@ -9,6 +9,10 @@ inputs:
   aws-secret-access-key:
     description: 'AWS secret access key'
     required: true
+  working-directory:
+    description: 'Working directory'
+    required: false
+    default: '.'
 
 runs:
   using: 'composite'
@@ -17,6 +21,7 @@ runs:
     - name: Check if VRT enabled
       id: vrt_enabled
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         vrtClientId=`echo $(jq -r '.plugins."reg-notify-github-plugin".clientId' <<< "$(cat regconfig.json)")`
         if [[ $vrtClientId != "" ]]; then
@@ -35,16 +40,19 @@ runs:
 
     - name: Install dependencies
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: yarn install --frozen-lockfile
 
     - name: Build storybook
       if: steps.vrt_enabled.outputs.runVrt
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: yarn storybook:build
 
     - name: create the current snapshot
       if: steps.vrt_enabled.outputs.runVrt
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: yarn storycap --chromiumPath ${{ steps.chrome.outputs.chrome-path }}
 
     - name: Run Reg-suit (pull request)
@@ -55,6 +63,7 @@ runs:
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
         BASE_SHA: ${{ github.event.pull_request.base.sha }}
         HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      working-directory: ${{ inputs.working-directory }}
       run: yarn run reg-suit run
 
     - name: Run Reg-suit (push)
@@ -63,6 +72,7 @@ runs:
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
+      working-directory: ${{ inputs.working-directory }}
       run: |
         node ${{ github.action_path }}/generate-reg-config.js "${{ github.workspace }}"
         yarn run reg-suit run --config=regconfig-push.json
