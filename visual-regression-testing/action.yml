@@ -72,6 +72,7 @@ runs:
       env:
         AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
       working-directory: ${{ inputs.working-directory }}
       run: |
         node ${{ github.action_path }}/generate-reg-config.js "${{ github.workspace }}"
